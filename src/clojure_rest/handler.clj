@@ -9,11 +9,11 @@
             [compojure.route :as route]))
 
 (def db-config
-  {:classname "org.h2.Driver"
+  {:classname   "org.h2.Driver"
    :subprotocol "h2"
-   :subname "mem:documents"
-   :user ""
-   :password ""})
+   :subname     "/tmp/documents"
+   :user        ""
+   :password    ""})
 
 (defn pool
   [config]
@@ -31,11 +31,15 @@
 
 (defn db-connection [] @pooled-db)
 
-(sql/with-connection (db-connection)
-                     ;  (sql/drop-table :documents) ; no need to do that for in-memory databases
-                     (sql/create-table :documents [:id "varchar(256)" "primary key"]
-                                       [:title "varchar(1024)"]
-                                       [:text :varchar]))
+(comment
+  ; uncomment this if :subname "mem:documents" ie: in memory db
+  (sql/with-connection (db-connection)
+                       ;  (sql/drop-table :documents) ; no need to do that for in-memory databases
+                       (sql/create-table :documents [:id "varchar(256)" "primary key"]
+                                         [:title "varchar(1024)"]
+                                         [:text :varchar]))
+)
+
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -74,11 +78,11 @@
 
 (defroutes app-routes
            (context "/documents" [] (defroutes documents-routes
-                                               (GET  "/" [] (get-all-documents))
+                                               (GET "/" [] (get-all-documents))
                                                (POST "/" {body :body} (create-new-document body))
                                                (context "/:id" [id] (defroutes document-routes
-                                                                               (GET    "/" [] (get-document id))
-                                                                               (PUT    "/" {body :body} (update-document id body))
+                                                                               (GET "/" [] (get-document id))
+                                                                               (PUT "/" {body :body} (update-document id body))
                                                                                (DELETE "/" [] (delete-document id))))))
            (route/not-found "Not Found"))
 
